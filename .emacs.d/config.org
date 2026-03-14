@@ -1,0 +1,493 @@
+#+TITLE:Stradlater's Emacs config
+#+startup:indent
+#+auto_tangle:t
+
+* Table of contents :toc_2:
+- [[#base][Base]]
+  - [[#early-init][Early init]]
+  - [[#package-manager][Package manager]]
+  - [[#setup][Setup]]
+  - [[#general][General]]
+  - [[#orderless][Orderless]]
+  - [[#sudo-edit][Sudo-edit]]
+  - [[#consult][Consult]]
+  - [[#lsp][LSP]]
+  - [[#flymake][Flymake]]
+  - [[#elcord][Elcord]]
+  - [[#dired-git-info][Dired-git-info]]
+- [[#treesitter][TreeSitter]]
+  - [[#treesitter-mode][TreeSitter mode]]
+- [[#editing][Editing]]
+  - [[#corfu][Corfu]]
+  - [[#smartparens][Smartparens]]
+  - [[#multicursors][MultiCursors]]
+  - [[#move-text][Move-text]]
+  - [[#yasnippet][YASnippet]]
+- [[#major-modes][Major Modes]]
+  - [[#magit][Magit]]
+  - [[#vterm][VTerm]]
+- [[#programming][Programming]]
+  - [[#web][Web]]
+- [[#org][Org]]
+  - [[#org-mode][Org-mode]]
+  - [[#treemacs][Treemacs]]
+- [[#appearance][Appearance]]
+  - [[#ligatures][Ligatures]]
+  - [[#beacon][Beacon]]
+  - [[#nerd-icons][Nerd-icons]]
+  - [[#dired][Dired]]
+  - [[#colorful-mode][Colorful mode]]
+  - [[#rainbow-delimiters][Rainbow-delimiters]]
+  - [[#theme][Theme]]
+  - [[#hydra][Hydra]]
+  - [[#vertico--marginalia][Vertico + Marginalia]]
+  - [[#powerline][Powerline]]
+  - [[#dashboard][Dashboard]]
+  - [[#which-key][Which-key]]
+  - [[#modeline][Modeline]]
+
+* Base
+** Early init
+#+begin_src emacs-lisp :tangle "early-init.el"
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (setq package-enable-at-startup nil)
+  (defmacro loadf (path)
+    "Eval file in Emacs config directory.
+  PATH: file name."
+    (load-file (concat user-emacs-directory path)))
+  (add-to-list 'default-frame-alist '(fullscreen . maximized))
+#+end_src
+
+** Package manager
+[[file:components/elpaca.el][Elpaca.el]]
+#+begin_src emacs-lisp :tangle "init.el"
+(loadf "components/elpaca.el")
+#+end_src
+
+
+
+
+** Setup
+#+begin_src emacs-lisp :tangle "init.el"
+  (savehist-mode)
+  (global-hl-line-mode 1)
+  (delete-selection-mode 1) ; allows to delete selected text by any key
+  (setq kill-whole-line t ; kill-line not leaves blank line
+        read-extended-command-predicate #'command-completion-default-include-p
+        text-mode-ispell-word-completion nil)
+
+  (set-frame-parameter nil 'alpha-background 95)
+  (setq-default save-interprogram-paste-before-kill t ;не перезаписывать внешний буфер при kill/yank
+      	      scroll-conservatively most-positive-fixnum ; scroll line-by-line
+      	      auto-save-mode nil
+       	      auto-save-default nil
+       	      make-backup-files nil
+       	      create-lockfiles nil
+      	      visible-bell 1
+    	      ring-bell-function 'ignore)
+  ;; idk why that mess doin' here, but I'll just left it here
+  ;; (setenv "PATH" (concat "/home/stradlater/" ".venv/bin" ":" (getenv "PATH")))
+  ;; (setenv "VIRTUAL_ENV" "/home/stradlater/.emacs.d/.venv")
+#+end_src
+
+
+** General
+[[file:components/general.el][General config]]
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package general
+    :ensure t
+    :config (loadf "components/general.el"))
+  (elpaca-wait)
+#+end_src
+
+** Orderless
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package orderless
+   :defer t
+   :custom
+   (completion-styles '(orderless basic))
+   (completion-category-defaults nil)
+   (completion-category-overrides
+    '((file (styles basic partial-completion)))))
+#+end_src
+
+** Sudo-edit
+#+begin_src emacs-lisp :tangle "init.el"
+(use-package sudo-edit)
+#+end_src
+
+
+** Consult
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package consult
+    :general
+    (:keymaps 'global-map
+  	    "C-s" 'consult-line
+  	    "C-s" 'consult-line
+  	    "C-x b" 'consult-buffer
+  	    "C-x C-b" 'consult-buffer-other-window))
+#+end_src
+
+** LSP
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package lsp-mode
+    :hook
+    (c++-mode lsp)
+    (c-mode lsp)
+    (cmake-ts-mode lsp)
+    :custom
+    (lsp-cmake-server-command '("/home/stradlater/.cargo/bin/neocmakelsp" "stdio")))
+
+  (use-package lsp-ui
+    :after lsp)
+#+end_src
+
+** Flymake
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package flymake
+    :commands flymake-mode
+    :after eglot)
+#+end_src
+
+** Elcord
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package elcord
+    :hook (elpaca-after-init . elcord-mode))
+#+end_src
+
+
+** Dired-git-info
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package dired-git-info
+    :hook (dired-after-readin . dired-git-info-auto-enable))
+#+end_src
+
+* TreeSitter
+#+begin_src emacs-lisp :tangle "init.el"
+#+end_src
+** TreeSitter mode
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package tree-sitter
+    :defer t
+    :custom
+    (treesit-language-source-alist
+     '((typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+       (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+       (css "https://github.com/tree-sitter/tree-sitter-css")
+       (scss "https://github.com/tree-sitter/tree-sitter-scss"))))
+
+  (use-package treesit-auto
+    :custom
+    (treesit-auto-install 'prompt)
+    :config
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode)
+    :defer t)
+#+end_src
+
+*** CMake TS :BROKEN:
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package cmake-ts-mode
+    :disabled t
+    :mode("CMakeLists\\.txt\\'" . cmake-ts-mode))
+#+end_src
+
+* Editing
+
+** Corfu
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package corfu
+   :defer t
+   :custom-face
+   (corfu-border
+    ((t (:background ,(face-attribute 'isearch :background nil nil)))))
+   :hook (elpaca-after-init . global-corfu-mode)
+   :custom
+   (tab-always-indent 'complete)
+   (corfu-auto t)
+   (corfu-auto-delay 0.4)
+   (corfu-auto-prefix 3)
+   (corfu-popupinfo-mode t)
+   (corfu-popupinfo-hide nil)
+   (corfu-popupinfo-delay '(5.0 . 1.0))
+   (corfu-preselect 'first)
+   :general
+   (:keymaps 'global-map "M-SPC" #'completion-at-point)
+   (:keymaps
+    'corfu-map "RET" #'corfu-send "TAB" 'corfu-popupinfo-toggle))
+#+end_src
+
+
+** Smartparens
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package smartparens
+   :defer t
+   :hook (emacs-lisp-mode . smartparens-mode)
+   :hook (org-mode . smartparens-mode))
+#+end_src
+
+
+** MultiCursors
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package multiple-cursors)
+#+end_src
+
+** Move-text
+#+begin_src emacs-lisp :tangle "init.el"
+(use-package move-text
+ :general
+ (:keymaps 'global-map "C-M-k" 'move-text-up "C-M-j" 'move-text-down))
+#+end_src
+
+
+** YASnippet
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package yasnippet
+    :commands yas-minor-mode)
+#+end_src
+*** Snippets
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package yasnippet-snippets
+    :after yasnippet)
+#+end_src
+
+
+* Major Modes
+** Magit
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package magit
+    :disabled t
+    :defer t)
+#+end_src
+
+** VTerm
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package vterm
+    :defer t)
+#+end_src
+
+* Programming
+** Web
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package prettier-js
+    :hook (tsx-ts-mode . prettier-js-mode))
+
+  (add-to-list 'auto-mode-alist '("\\.ts\\'"   . typescript-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.tsx\\'"  . tsx-ts-mode))
+  (add-hook 'tsx-ts-mode-hook 'prog-mode-hook)
+  (add-to-list 'auto-mode-alist '("\\.scss\\'" . scss-mode))
+  (add-hook 'scss-mode-hook 'prog-mode-hook)
+  (add-to-list 'auto-mode-alist '("\\.sass\\'" . sass-mode))
+
+#+end_src
+
+
+* Org
+** Org-mode
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package org
+   :custom-face
+   (org-document-title ((t (:height 180))))
+   (org-level-1 ((t (:height 160))))
+   (org-level-2 ((t (:height 140))))
+   (org-level-3 ((t (:height 120))))
+   :general-config (:keymaps 'org-mode-map "C-j" nil))
+   ;; (org-block ((t (:background ,(face-attribute 'secondary-selection :background nil nil)))))
+#+end_src
+
+*** Org modern
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package org-modern
+    :hook (org-mode . org-modern-mode))
+#+end_src
+
+*** Visual Fill Column
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package visual-fill-column
+    :after org
+    :disabled t
+    :hook
+    (org-mode . visual-fill-column-mode)
+    (dashboard-mode . visual-fill-column-mode)
+    :custom
+    (visual-fill-column-width 100)
+    (visual-fill-column-center-text t))
+#+end_src
+
+*** Toc-org
+#+begin_src emacs-lisp :tangle "init.el"
+(use-package toc-org :hook (org-mode . toc-org-mode))
+#+end_src
+
+*** Org-auto-tangle
+#+begin_src emacs-lisp :tangle "init.el"
+(use-package org-auto-tangle :hook (org-mode . org-auto-tangle-mode))
+#+end_src
+
+** Treemacs
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package treemacs
+    :general-config
+    (:keymaps 'global-map "C-z" 'treemacs)
+    :config
+    (setq display-line-numbers nil)
+    (setq treemacs-nerd-icons-tab " ")
+    (loadf "components/treemacs-nerd-icons.el")
+    (treemacs-load-theme "nerd-icons")
+    :custom
+    (treemacs-fringe-indicator-mode nil))
+#+end_src
+*** Magit integration
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package treemacs-magit
+    :disabled t)
+#+end_src
+
+
+* Appearance
+#+begin_src emacs-lisp :tangle "init.el"
+  (set-face-attribute 'default nil
+                      :family "Iosevka NF"
+                      :height 110
+                      :weight 'medium)
+  (set-face-attribute 'mode-line nil :family "Iosevka NF")
+  (set-face-attribute 'mode-line-active nil :family "Iosevka NF")
+  (set-face-attribute 'mode-line-inactive nil :family "Iosevka NF")
+#+end_src
+
+** Ligatures
+#+begin_src elisp
+  (use-package ligature
+    :config
+    (ligature-set-ligatures
+     '(prog-mode org-mode)
+     '("<---""<--""<<-""<-""->""-->""--->""<->""<-->""<-->""<---->""<!--"
+       "<==""<===""<=""=>""=>>""==>""===>"">=""<=>""<==>""<===>""<====>"
+       "<~~""<~""~>""~~>""::"":::""==""!=""===""!==""<>"":="":-"":+""<*"
+       "<*>""*>""<|""<|>""|>""+:""-:""=:""<******>""++""+++"))
+    (global-ligature-mode t))
+#+end_src
+
+** Beacon
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package beacon
+    :defer t
+    :config (beacon-mode 1))
+#+end_src
+
+** Nerd-icons
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package nerd-icons)
+  (use-package nerd-icons-corfu
+   :after corfu
+   :config
+   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+#+end_src
+
+** Dired
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package dired
+    :ensure nil
+    :custom-face (dired-broken-symlink
+  		((t (
+  		     :foreground "OrangeRed1"
+  		     :background unspecified
+  		     :weight unspecified)))))
+
+  (use-package nerd-icons-dired
+    :after nerd-icons
+    :hook
+  (dired-mode . nerd-icons-dired-mode))
+#+end_src
+*** Dired subtree
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package dired-subtree
+    :after dired
+    :disabled t
+    :commands (dired-subtree-toggle dired-subtree-cycle)
+    :general (:keymaps 'dired-mode-map
+  		     "<tab>" 'dired-subtree-toggle
+  		     "<backtab>" 'dired-subtree-cycle))
+#+end_src
+
+** Colorful mode
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package colorful-mode
+    :custom (colorful-highlight-in-comments t)
+    :config (global-colorful-mode))
+#+end_src
+
+** Rainbow-delimiters
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package rainbow-delimiters
+   :defer t
+   :hook (prog-mode . rainbow-delimiters-mode)
+   :hook (help-mode . rainbow-delimiters-mode)
+   :hook (org-mode . rainbow-delimiters-mode))
+#+end_src
+
+** Theme
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package gruvbox-theme
+    :config
+   (load-theme 'gruvbox-dark-soft t)
+   (set-face-attribute 'line-number nil :inherit 'default)
+   (set-face-attribute 'line-number-current-line nil :inherit 'default))
+#+end_src
+
+** Hydra
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package hydra)
+#+end_src
+
+** Vertico + Marginalia
+#+begin_src emacs-lisp :tangle "init.el"
+(use-package vertico
+ :init (vertico-mode)
+ :general-config (:keymaps 'vertico-map "C-j" nil))
+
+(use-package marginalia :after vertico :init (marginalia-mode))
+#+end_src
+
+** Powerline
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package powerline
+    :hook (elpaca-after-init . powerline-default-theme))
+#+end_src
+
+** Dashboard
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package dashboard
+    :hook
+    (dashboard-after-initialize
+     . (lambda () (set-frame-parameter nil 'visibility t)))
+    :config
+    (toggle-truncate-lines 1)
+    (add-hook
+  	   'elpaca-after-init-hook #'dashboard-insert-startupify-lists)
+    (add-hook 'elpaca-after-init-hook #'dashboard-initialize)
+    (dashboard-setup-startup-hook))
+#+end_src
+
+** Which-key
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package which-key
+    :defer t
+    :init (which-key-mode)
+    :custom
+    (which-key-sort-order #'which-key-key-order-alpha)
+    (which-key-sort-uppercase-first nil)
+    (which-key-add-column-padding 4)
+    (which-key-max-display-columns 4)
+    (which-key-min-display-lines 10)
+    (which-key-side-window-max-height 0.5)
+    (which-key-idle-delay 1.5)
+    (which-key-max-description-length 30)
+    (which-key-allow-imprecise-window-fit nil)
+    (which-key-separator " ⊳ "))
+#+end_src
+
+** Modeline
+[[file:components/modeline.el][Modeline]]

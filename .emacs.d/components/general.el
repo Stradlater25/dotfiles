@@ -10,8 +10,10 @@
  "C-<tab>"	(lambda () (interactive) (insert-tab))
  "M-RET"	'duplicate-line
  "C-;"		'kill-line
-
- "H-z" 'resize-window/body
+ 
+ "H-<return>"	'vterm
+ "C-x C-<return>" 'vterm-other-window
+ "H-z"		'resize-window/body
  )
 
 (general-define-key
@@ -25,8 +27,8 @@
   :keymaps 'lisp-interaction-mode-map
   "C-j")
 (with-eval-after-load 'hydra
-(defhydra resize-window (:hint nil)
-  "
+  (defhydra resize-window (:hint nil)
+    "
 ^Window size^
 ^^^^^^^^-------------------------------------------------------------
 _H-l_: Enlarge horizontally	
@@ -34,9 +36,9 @@ _H-h_: Shrink horizontally
 _H-k_: Enlarge vertically	
 _H-j_: Shrink vertically
 "
-  ("H-l" enlarge-window-horizontally)
-  ("H-h" shrink-window-horizontally)
-  ("H-k" enlarge-window)
-  ("H-j" shrink-window)
-  ))
+    ("H-l" enlarge-window-horizontally)
+    ("H-h" shrink-window-horizontally)
+    ("H-k" enlarge-window)
+    ("H-j" shrink-window)
+    ))
 

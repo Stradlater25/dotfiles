@@ -272,9 +272,12 @@
 ** Web
 #+begin_src emacs-lisp :tangle "init.el"
   (use-package prettier-js
-    :hook (tsx-ts-mode . prettier-js-mode))
+    :hook
+    (tsx-ts-mode . prettier-js-mode)
+    (scss-mode . prettier-js-mode))
 
   (add-to-list 'auto-mode-alist '("\\.ts\\'"   . typescript-ts-mode))
+  (add-hook 'typescript-ts-mode-hook 'prog-mode-hook)
   (add-to-list 'auto-mode-alist '("\\.tsx\\'"  . tsx-ts-mode))
   (add-hook 'tsx-ts-mode-hook 'prog-mode-hook)
   (add-to-list 'auto-mode-alist '("\\.scss\\'" . scss-mode))
@@ -380,10 +383,17 @@
 ** Nerd-icons
 #+begin_src emacs-lisp :tangle "init.el"
   (use-package nerd-icons)
+  
   (use-package nerd-icons-corfu
    :after corfu
    :config
    (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+
+  (use-package nerd-icons-completion
+    :after marginalia
+    :config
+    (nerd-icons-completion-mode)
+    (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 #+end_src
 
 ** Dired
@@ -399,7 +409,7 @@
   (use-package nerd-icons-dired
     :after nerd-icons
     :hook
-  (dired-mode . nerd-icons-dired-mode))
+    (dired-mode . nerd-icons-dired-mode))
 #+end_src
 *** Dired subtree
 #+begin_src emacs-lisp :tangle "init.el"

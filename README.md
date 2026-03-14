@@ -3,7 +3,7 @@
 - Hyprland
 
 ## My keyboard layout
-US / RU
+> 🇺🇸US / 🇷🇺RU
 
 > [!WARNING]
 > It doesn't work correctly in [Niri](https://github.com/niri-wm/niri) <br>because it's compiled with a version of libxkbcommon that doesn't support format v2.

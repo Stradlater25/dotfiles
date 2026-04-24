@@ -12,7 +12,8 @@
   - [[#sudo-edit][Sudo-edit]]
   - [[#consult][Consult]]
   - [[#lsp][LSP]]
-  - [[#flymake][Flymake]]
+  - [[#flymakeflymake][Flymake/Flymake]]
+  - [[#projectile][Projectile]]
   - [[#elcord][Elcord]]
   - [[#dired-git-info][Dired-git-info]]
 - [[#treesitter][TreeSitter]]
@@ -28,6 +29,7 @@
   - [[#vterm][VTerm]]
 - [[#programming][Programming]]
   - [[#web][Web]]
+  - [[#my-web-hook][My web hook]]
 - [[#org][Org]]
   - [[#org-mode][Org-mode]]
   - [[#treemacs][Treemacs]]
@@ -37,6 +39,7 @@
   - [[#nerd-icons][Nerd-icons]]
   - [[#dired][Dired]]
   - [[#colorful-mode][Colorful mode]]
+  - [[#indent-bars][Indent-bars]]
   - [[#rainbow-delimiters][Rainbow-delimiters]]
   - [[#theme][Theme]]
   - [[#hydra][Hydra]]
@@ -51,13 +54,14 @@
 #+begin_src emacs-lisp :tangle "early-init.el"
   (menu-bar-mode -1)
   (tool-bar-mode -1)
-  (scroll-bar-mode -1)
+  (setq initial-frame-alist '((fullscreen . maximized) (alpha-background . 0.95) (vertical-scroll-bars . nil)))
+  (setq default-frame-alist '((alpha-background . 0.95) (vertical-scroll-bars . nil)))
   (setq package-enable-at-startup nil)
   (defmacro loadf (path)
     "Eval file in Emacs config directory.
   PATH: file name."
     (load-file (concat user-emacs-directory path)))
-  (add-to-list 'default-frame-alist '(fullscreen . maximized))
+  ;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
 #+end_src
 
 ** Package manager
@@ -65,9 +69,6 @@
 #+begin_src emacs-lisp :tangle "init.el"
 (loadf "components/elpaca.el")
 #+end_src
-
-
-
 
 ** Setup
 #+begin_src emacs-lisp :tangle "init.el"
@@ -77,21 +78,20 @@
   (setq kill-whole-line t ; kill-line not leaves blank line
         read-extended-command-predicate #'command-completion-default-include-p
         text-mode-ispell-word-completion nil)
-
-  (set-frame-parameter nil 'alpha-background 95)
+  ;; (set-frame-parameter nil 'alpha-background 95)
   (setq-default save-interprogram-paste-before-kill t ;не перезаписывать внешний буфер при kill/yank
       	      scroll-conservatively most-positive-fixnum ; scroll line-by-line
       	      auto-save-mode nil
        	      auto-save-default nil
-       	      make-backup-files nil
+  	      make-backup-files nil
        	      create-lockfiles nil
       	      visible-bell 1
     	      ring-bell-function 'ignore)
+  (setq initial-buffer-choice "~/")
+  (add-to-list 'exec-path (concat (getenv "HOME") "/.local/share/pnpm"))
   ;; idk why that mess doin' here, but I'll just left it here
   ;; (setenv "PATH" (concat "/home/stradlater/" ".venv/bin" ":" (getenv "PATH")))
-  ;; (setenv "VIRTUAL_ENV" "/home/stradlater/.emacs.d/.venv")
 #+end_src
-
 
 ** General
 [[file:components/general.el][General config]]
@@ -133,22 +133,97 @@
 ** LSP
 #+begin_src emacs-lisp :tangle "init.el"
   (use-package lsp-mode
+    :commands (lsp lsp-deferred)
     :hook
-    (c++-mode lsp)
-    (c-mode lsp)
-    (cmake-ts-mode lsp)
+    (c++-mode lsp-deferred)
+    (pythoh-ts-mode lsp-deferred)
+    (c-mode lsp-deferred)
+    (tsx-ts-mode lsp-deferred)
+    (cmake-ts-mode lsp-deferred)
     :custom
-    (lsp-cmake-server-command '("/home/stradlater/.cargo/bin/neocmakelsp" "stdio")))
+    (lsp-keymap-prefix "C-c l")
+    (lsp-idle-delay 0.3)
+    (lsp-log-io nil)
+    (lsp-completion-provider :none)
+    (lsp-inlay-hint-enable t)
+    (lsp-modeline-diagnostics-enable t)
+    (lsp-modeline-code-actions-enable t)
+      ;; Breadcrumb (путь к символу вверху буфера)
+    (lsp-headerline-breadcrumb-enable t)
+    (lsp-headerline-breadcrumb-segments '(project file symbols))
+    ;; cause we use prettier
+    (lsp-enable-on-type-formatting nil)
+    (lsp-cmake-server-command '("/home/stradlater/.cargo/bin/neocmakelsp" "stdio"))
+    :config
+    (lsp-enable-which-key-integration t)
+    )
 
   (use-package lsp-ui
-    :after lsp)
+    :after lsp-mode
+    :config
+    (set-face-attribute  'lsp-ui-sideline-global nil;; иначе уёбищный шрифт будет
+  		       :family "Iosevka NF" )
+    (set-face-attribute 'lsp-ui-doc-background nil
+  		      :background (face-attribute 'default :background nil t))
+    (set-face-attribute 'lsp-ui-doc-highlight-hover nil
+  		      :background (face-attribute 'default :background nil t))
+    :custom
+    ;; Sideline
+    (lsp-ui-doc-border (face-background 'isearch))
+    (lsp-ui-sideline-enable t)
+    (lsp-ui-sideline-show-diagnostics t)
+    (lsp-ui-sideline-show-hover t)
+    (lsp-ui-sideline-show-code-actions t)
+    (lsp-ui-sideline-delay 0.3)
+    ;; Doc popup
+    (lsp-ui-doc-enable t)
+    (lsp-ui-doc-position 'at-point)
+    (lsp-ui-doc-show-with-cursor nil) ;;after command
+    (lsp-ui-doc-show-with-moust t)
+    (lsp-ui-doc-max-height 20)
+    :general
+    (:keymaps 'lsp-ui-mode-map
+              "M-."     'lsp-ui-peek-find-definitions
+              "M-?"     'lsp-ui-peek-find-references
+              "C-c l d" 'lsp-ui-doc-glance   ; показать доку разово
+              "C-c l i" 'lsp-ui-imenu)      ; структура файла
+  )
+#+end_src
+*** LSP Pyright
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package lsp-pyright
+    :after lsp-mode)
 #+end_src
 
-** Flymake
+** Flymake/Flymake
 #+begin_src emacs-lisp :tangle "init.el"
   (use-package flymake
+    :disabled t
     :commands flymake-mode
     :after eglot)
+
+  (use-package flycheck
+    :hook(prog-mode . flycheck-mode)
+    :custom
+    (flycheck-check-syntax-automatically '(save mode-enabled))
+    (flycheck-indication-mode 'right-fringe)
+    )
+
+  (use-package flycheck-posframe
+    :after flycheck
+    :hook (flycheck-mode . flycheck-posframe-mode)
+    :custom
+    (flycheck-posframe-position 'point-bottom-left-corner)
+    (flycheck-posframe-border-width 2))
+#+end_src
+
+** Projectile
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package projectile
+    :config (projectile-mode)
+    :general
+    ("C-c p" '(:keymap projectile-command-map :wk "Projectile")))
+
 #+end_src
 
 ** Elcord
@@ -198,12 +273,12 @@
 
 ** Corfu
 #+begin_src emacs-lisp :tangle "init.el"
+  ;;(face-foreground 'line-number-current-line)
   (use-package corfu
-   :defer t
-   :custom-face
-   (corfu-border
-    ((t (:background ,(face-attribute 'isearch :background nil nil)))))
    :hook (elpaca-after-init . global-corfu-mode)
+   :config
+   (set-face-attribute 'corfu-border nil
+  		     :background "#fe8019")
    :custom
    (tab-always-indent 'complete)
    (corfu-auto t)
@@ -245,7 +320,8 @@
 ** YASnippet
 #+begin_src emacs-lisp :tangle "init.el"
   (use-package yasnippet
-    :commands yas-minor-mode)
+    :commands yas-minor-mode
+    :hook (strd/web-mode . yas-minor-mode))
 #+end_src
 *** Snippets
 #+begin_src emacs-lisp :tangle "init.el"
@@ -277,15 +353,31 @@
     (scss-mode . prettier-js-mode))
 
   (add-to-list 'auto-mode-alist '("\\.ts\\'"   . typescript-ts-mode))
-  (add-hook 'typescript-ts-mode-hook 'prog-mode-hook)
   (add-to-list 'auto-mode-alist '("\\.tsx\\'"  . tsx-ts-mode))
-  (add-hook 'tsx-ts-mode-hook 'prog-mode-hook)
   (add-to-list 'auto-mode-alist '("\\.scss\\'" . scss-mode))
-  (add-hook 'scss-mode-hook 'prog-mode-hook)
   (add-to-list 'auto-mode-alist '("\\.sass\\'" . sass-mode))
-
 #+end_src
 
+
+** My web hook
+#+begin_src emacs-lisp :tangle "init.el"
+  (defvar strd/web-mode-hook nil
+    "My web mode hook")
+
+  (defun strd/web-mode-setup ()
+    (run-hooks 'strd/web-mode-hook))
+
+  (dolist (mode-hook '(typescript-ts-mode-hook
+  		     tsx-ts-mode-hook
+  		     sass-mode-hook
+  		     scss-mode-hook))
+    (add-hook mode-hook #'strd/web-mode-setup))
+  (add-hook 'strd/web-mode-hook #'display-line-numbers-mode)
+  (add-hook 'strd/web-mode-hook #'yas-minor-mode-on)
+  (add-hook 'strd/web-mode-hook #'smartparens-mode)
+
+
+#+end_src
 
 * Org
 ** Org-mode
@@ -297,20 +389,20 @@
    (org-level-2 ((t (:height 140))))
    (org-level-3 ((t (:height 120))))
    :general-config (:keymaps 'org-mode-map "C-j" nil))
-   ;; (org-block ((t (:background ,(face-attribute 'secondary-selection :background nil nil)))))
 #+end_src
 
 *** Org modern
 #+begin_src emacs-lisp :tangle "init.el"
   (use-package org-modern
+    :disabled t
     :hook (org-mode . org-modern-mode))
 #+end_src
 
 *** Visual Fill Column
 #+begin_src emacs-lisp :tangle "init.el"
   (use-package visual-fill-column
-    :after org
     :disabled t
+    :after org
     :hook
     (org-mode . visual-fill-column-mode)
     (dashboard-mode . visual-fill-column-mode)
@@ -331,6 +423,7 @@
 
 ** Treemacs
 #+begin_src emacs-lisp :tangle "init.el"
+;;    (:keymaps)
   (use-package treemacs
     :general-config
     (:keymaps 'global-map "C-z" 'treemacs)
@@ -342,6 +435,13 @@
     :custom
     (treemacs-fringe-indicator-mode nil))
 #+end_src
+**Disabled binds**
+|-------+-----------------------------+-------------------------------------|
+| Binds | command                     | definition                          |
+| C-k   | (treemacs-previous-project) | Move to the next project root node. |
+| C-j   | (treemacs-next-project)     | Move to the prev project root node. |
+
+
 *** Magit integration
 #+begin_src emacs-lisp :tangle "init.el"
   (use-package treemacs-magit
@@ -429,6 +529,24 @@
     :config (global-colorful-mode))
 #+end_src
 
+** Indent-bars
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package indent-bars
+    :hook((prog-mode strd/web-mode) . indent-bars-mode)
+    :custom
+    (indent-bars-color '(highlight :face-bg t :blend 0.2))
+    (indent-bars-pattern ".")
+    (indent-bars-width-frac 0.1)
+    (indent-bars-pad-frac 0.1)
+    (indent-bars-no-descend-lists nil)
+    (indent-bars-treesit-support t)
+    (indent-bars-starting-column 1)
+    (indent-bars-zigzag nil)
+    (indent-bars-color-by-depth nil)
+    (indent-bars-highlight-current-depth nil)
+    (indent-bars-treesit-wrap '((c argument_list parameter_list init_declarator parenthesized_expression))))
+#+end_src
+
 ** Rainbow-delimiters
 #+begin_src emacs-lisp :tangle "init.el"
   (use-package rainbow-delimiters
@@ -454,11 +572,14 @@
 
 ** Vertico + Marginalia
 #+begin_src emacs-lisp :tangle "init.el"
-(use-package vertico
- :init (vertico-mode)
- :general-config (:keymaps 'vertico-map "C-j" nil))
+  (use-package vertico
+   :init (vertico-mode)
+   :general-config (:keymaps 'vertico-map "C-j" nil))
 
-(use-package marginalia :after vertico :init (marginalia-mode))
+  (use-package marginalia
+    :after vertico
+    :requires vertico
+    :init (marginalia-mode))
 #+end_src
 
 ** Powerline
@@ -470,9 +591,9 @@
 ** Dashboard
 #+begin_src emacs-lisp :tangle "init.el"
   (use-package dashboard
-    :hook
-    (dashboard-after-initialize
-     . (lambda () (set-frame-parameter nil 'visibility t)))
+    ;; :hook
+    ;; (dashboard-after-initialize
+     ;; . (lambda () (set-frame-parameter nil 'visibility t)))
     :config
     (toggle-truncate-lines 1)
     (add-hook

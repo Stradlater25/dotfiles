@@ -6,19 +6,19 @@
 (setq kill-whole-line t ; kill-line not leaves blank line
       read-extended-command-predicate #'command-completion-default-include-p
       text-mode-ispell-word-completion nil)
-
-(set-frame-parameter nil 'alpha-background 95)
+;; (set-frame-parameter nil 'alpha-background 95)
 (setq-default save-interprogram-paste-before-kill t ;не перезаписывать внешний буфер при kill/yank
     	      scroll-conservatively most-positive-fixnum ; scroll line-by-line
     	      auto-save-mode nil
      	      auto-save-default nil
-     	      make-backup-files nil
+	      make-backup-files nil
      	      create-lockfiles nil
     	      visible-bell 1
   	      ring-bell-function 'ignore)
+(setq initial-buffer-choice "~/")
+(add-to-list 'exec-path (concat (getenv "HOME") "/.local/share/pnpm"))
 ;; idk why that mess doin' here, but I'll just left it here
 ;; (setenv "PATH" (concat "/home/stradlater/" ".venv/bin" ":" (getenv "PATH")))
-;; (setenv "VIRTUAL_ENV" "/home/stradlater/.emacs.d/.venv")
 
 (use-package general
   :ensure t
@@ -44,19 +44,88 @@
 	    "C-x C-b" 'consult-buffer-other-window))
 
 (use-package lsp-mode
+  :commands (lsp lsp-deferred)
   :hook
-  (c++-mode lsp)
-  (c-mode lsp)
-  (cmake-ts-mode lsp)
+  (c++-mode lsp-deferred)
+  (pythoh-ts-mode lsp-deferred)
+  (c-mode lsp-deferred)
+  (tsx-ts-mode lsp-deferred)
+  (cmake-ts-mode lsp-deferred)
   :custom
-  (lsp-cmake-server-command '("/home/stradlater/.cargo/bin/neocmakelsp" "stdio")))
+  (lsp-keymap-prefix "C-c l")
+  (lsp-idle-delay 0.3)
+  (lsp-log-io nil)
+  (lsp-completion-provider :none)
+  (lsp-inlay-hint-enable t)
+  (lsp-modeline-diagnostics-enable t)
+  (lsp-modeline-code-actions-enable t)
+    ;; Breadcrumb (путь к символу вверху буфера)
+  (lsp-headerline-breadcrumb-enable t)
+  (lsp-headerline-breadcrumb-segments '(project file symbols))
+  ;; cause we use prettier
+  (lsp-enable-on-type-formatting nil)
+  (lsp-cmake-server-command '("/home/stradlater/.cargo/bin/neocmakelsp" "stdio"))
+  :config
+  (lsp-enable-which-key-integration t)
+  )
 
 (use-package lsp-ui
-  :after lsp)
+  :after lsp-mode
+  :config
+  (set-face-attribute  'lsp-ui-sideline-global nil;; иначе уёбищный шрифт будет
+		       :family "Iosevka NF" )
+  (set-face-attribute 'lsp-ui-doc-background nil
+		      :background (face-attribute 'default :background nil t))
+  (set-face-attribute 'lsp-ui-doc-highlight-hover nil
+		      :background (face-attribute 'default :background nil t))
+  :custom
+  ;; Sideline
+  (lsp-ui-doc-border (face-background 'isearch))
+  (lsp-ui-sideline-enable t)
+  (lsp-ui-sideline-show-diagnostics t)
+  (lsp-ui-sideline-show-hover t)
+  (lsp-ui-sideline-show-code-actions t)
+  (lsp-ui-sideline-delay 0.3)
+  ;; Doc popup
+  (lsp-ui-doc-enable t)
+  (lsp-ui-doc-position 'at-point)
+  (lsp-ui-doc-show-with-cursor nil) ;;after command
+  (lsp-ui-doc-show-with-moust t)
+  (lsp-ui-doc-max-height 20)
+  :general
+  (:keymaps 'lsp-ui-mode-map
+            "M-."     'lsp-ui-peek-find-definitions
+            "M-?"     'lsp-ui-peek-find-references
+            "C-c l d" 'lsp-ui-doc-glance   ; показать доку разово
+            "C-c l i" 'lsp-ui-imenu)      ; структура файла
+)
+
+(use-package lsp-pyright
+  :after lsp-mode)
 
 (use-package flymake
+  :disabled t
   :commands flymake-mode
   :after eglot)
+
+(use-package flycheck
+  :hook(prog-mode . flycheck-mode)
+  :custom
+  (flycheck-check-syntax-automatically '(save mode-enabled))
+  (flycheck-indication-mode 'right-fringe)
+  )
+
+(use-package flycheck-posframe
+  :after flycheck
+  :hook (flycheck-mode . flycheck-posframe-mode)
+  :custom
+  (flycheck-posframe-position 'point-bottom-left-corner)
+  (flycheck-posframe-border-width 2))
+
+(use-package projectile
+  :config (projectile-mode)
+  :general
+  ("C-c p" '(:keymap projectile-command-map :wk "Projectile")))
 
 (use-package elcord
   :hook (elpaca-after-init . elcord-mode))
@@ -87,12 +156,12 @@
   :disabled t
   :mode("CMakeLists\\.txt\\'" . cmake-ts-mode))
 
+;;(face-foreground 'line-number-current-line)
 (use-package corfu
- :defer t
- :custom-face
- (corfu-border
-  ((t (:background ,(face-attribute 'isearch :background nil nil)))))
  :hook (elpaca-after-init . global-corfu-mode)
+ :config
+ (set-face-attribute 'corfu-border nil
+		     :background "#fe8019")
  :custom
  (tab-always-indent 'complete)
  (corfu-auto t)
@@ -119,7 +188,8 @@
  (:keymaps 'global-map "C-M-k" 'move-text-up "C-M-j" 'move-text-down))
 
 (use-package yasnippet
-  :commands yas-minor-mode)
+  :commands yas-minor-mode
+  :hook (strd/web-mode . yas-minor-mode))
 
 (use-package yasnippet-snippets
   :after yasnippet)
@@ -137,12 +207,24 @@
   (scss-mode . prettier-js-mode))
 
 (add-to-list 'auto-mode-alist '("\\.ts\\'"   . typescript-ts-mode))
-(add-hook 'typescript-ts-mode-hook 'prog-mode-hook)
 (add-to-list 'auto-mode-alist '("\\.tsx\\'"  . tsx-ts-mode))
-(add-hook 'tsx-ts-mode-hook 'prog-mode-hook)
 (add-to-list 'auto-mode-alist '("\\.scss\\'" . scss-mode))
-(add-hook 'scss-mode-hook 'prog-mode-hook)
 (add-to-list 'auto-mode-alist '("\\.sass\\'" . sass-mode))
+
+(defvar strd/web-mode-hook nil
+  "My web mode hook")
+
+(defun strd/web-mode-setup ()
+  (run-hooks 'strd/web-mode-hook))
+
+(dolist (mode-hook '(typescript-ts-mode-hook
+		     tsx-ts-mode-hook
+		     sass-mode-hook
+		     scss-mode-hook))
+  (add-hook mode-hook #'strd/web-mode-setup))
+(add-hook 'strd/web-mode-hook #'display-line-numbers-mode)
+(add-hook 'strd/web-mode-hook #'yas-minor-mode-on)
+(add-hook 'strd/web-mode-hook #'smartparens-mode)
 
 (use-package org
  :custom-face
@@ -151,14 +233,14 @@
  (org-level-2 ((t (:height 140))))
  (org-level-3 ((t (:height 120))))
  :general-config (:keymaps 'org-mode-map "C-j" nil))
- ;; (org-block ((t (:background ,(face-attribute 'secondary-selection :background nil nil)))))
 
 (use-package org-modern
+  :disabled t
   :hook (org-mode . org-modern-mode))
 
 (use-package visual-fill-column
-  :after org
   :disabled t
+  :after org
   :hook
   (org-mode . visual-fill-column-mode)
   (dashboard-mode . visual-fill-column-mode)
@@ -170,16 +252,17 @@
 
 (use-package org-auto-tangle :hook (org-mode . org-auto-tangle-mode))
 
-(use-package treemacs
-  :general-config
-  (:keymaps 'global-map "C-z" 'treemacs)
-  :config
-  (setq display-line-numbers nil)
-  (setq treemacs-nerd-icons-tab " ")
-  (loadf "components/treemacs-nerd-icons.el")
-  (treemacs-load-theme "nerd-icons")
-  :custom
-  (treemacs-fringe-indicator-mode nil))
+;;    (:keymaps)
+  (use-package treemacs
+    :general-config
+    (:keymaps 'global-map "C-z" 'treemacs)
+    :config
+    (setq display-line-numbers nil)
+    (setq treemacs-nerd-icons-tab " ")
+    (loadf "components/treemacs-nerd-icons.el")
+    (treemacs-load-theme "nerd-icons")
+    :custom
+    (treemacs-fringe-indicator-mode nil))
 
 (use-package treemacs-magit
   :disabled t)
@@ -234,6 +317,21 @@
   :custom (colorful-highlight-in-comments t)
   :config (global-colorful-mode))
 
+(use-package indent-bars
+  :hook((prog-mode strd/web-mode) . indent-bars-mode)
+  :custom
+  (indent-bars-color '(highlight :face-bg t :blend 0.2))
+  (indent-bars-pattern ".")
+  (indent-bars-width-frac 0.1)
+  (indent-bars-pad-frac 0.1)
+  (indent-bars-no-descend-lists nil)
+  (indent-bars-treesit-support t)
+  (indent-bars-starting-column 1)
+  (indent-bars-zigzag nil)
+  (indent-bars-color-by-depth nil)
+  (indent-bars-highlight-current-depth nil)
+  (indent-bars-treesit-wrap '((c argument_list parameter_list init_declarator parenthesized_expression))))
+
 (use-package rainbow-delimiters
  :defer t
  :hook (prog-mode . rainbow-delimiters-mode)
@@ -252,15 +350,18 @@
  :init (vertico-mode)
  :general-config (:keymaps 'vertico-map "C-j" nil))
 
-(use-package marginalia :after vertico :init (marginalia-mode))
+(use-package marginalia
+  :after vertico
+  :requires vertico
+  :init (marginalia-mode))
 
 (use-package powerline
   :hook (elpaca-after-init . powerline-default-theme))
 
 (use-package dashboard
-  :hook
-  (dashboard-after-initialize
-   . (lambda () (set-frame-parameter nil 'visibility t)))
+  ;; :hook
+  ;; (dashboard-after-initialize
+   ;; . (lambda () (set-frame-parameter nil 'visibility t)))
   :config
   (toggle-truncate-lines 1)
   (add-hook

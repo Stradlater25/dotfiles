@@ -1,12 +1,10 @@
 ## There are configs for:
 - Emacs
 - Hyprland
+- Niri
 
 ## My keyboard layout
 > 🇺🇸US / 🇷🇺RU
-
-> [!WARNING]
-> It doesn't work correctly in [Niri](https://github.com/niri-wm/niri) <br>because it's compiled with a version of libxkbcommon that doesn't support format v2.
 
 | Key               | Action            |
 | :---              | :---              |
@@ -16,5 +14,5 @@
 |`RShift + LShift`  |`Caps Lock`        |
 |`LCtrl`            |`Hyper_L`          |
 |`Caps`             |`LCtrl`            |
-|`Menu`             |`Compose`          |
-|`Shift + Menu`     |`Menu`             |
+|`RCtl`             |`Compose`          |
+|`Shift + RCtl`     |`Menu`             |

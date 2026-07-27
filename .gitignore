@@ -1,0 +1,9 @@
+.config/emacs/components/recentf.el
+.config/emacs/elpaca
+.config/emacs/.cache
+.config/emacs/eln-cache
+.config/emacs/auto-save-list
+.config/emacs/history
+.config/emacs/tramp
+.config/emacs/tree-sitter
+.config/emacs/url

@@ -1,0 +1,35 @@
+partial modifier_keys
+xkb_symbols "hyper_capscontrol" {
+	replace key <CAPS> { [ Control_L, { Control_L, ISO_Next_Group } ] };
+	replace key <LCTL> { [ Hyper_L ] };
+	replace key <LFSH> {
+		[ Shift_L, {Shift_L, ISO_Next_Group} ],
+		type[group1]="PC_CONTROL_LEVEL2"
+	};
+
+	modifier_map Control { <CAPS> };
+	modifier_map Mod3 { <HYPR> };
+
+};
+
+
+// shifts activates capslock
+xkb_symbols "caps_shifts" {
+	replace key <RTSH> { [ Shift_R, Caps_Lock ] };
+};
+
+
+// right ctrl as compose. menu, while shift is pressed
+xkb_symbols "rctrl_composemenu" {
+	replace key <RCTL> {
+		type= "TWO_LEVEL",
+		symbols[1]= [ Multi_key, Menu ]
+	};
+};
+
+
+
+
+
+
+

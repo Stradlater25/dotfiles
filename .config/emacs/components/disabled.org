@@ -1,0 +1,191 @@
+#+TITLE: Disabled configuration
+#+DESCRIPTION: can be used in future
+#+startup:indent
+
+* Table of contents :toc_3:
+- [[#appearance][Appearance]]
+  - [[#faces][Faces]]
+  - [[#themes][Themes]]
+    - [[#gruvbox-theme][Gruvbox-theme]]
+  - [[#icons][Icons]]
+    - [[#kind-icon][Kind icon]]
+  - [[#modeline][Modeline]]
+    - [[#strd-modeline][Strd-modeline]]
+    - [[#sleek-modeline][Sleek-modeline]]
+    - [[#powerline][Powerline]]
+- [[#lsp][LSP]]
+  - [[#lsp-bridge][Lsp Bridge]]
+  - [[#lsp-ui][LSP-UI]]
+  - [[#lsp-mode][LSP Mode]]
+
+* Appearance
+** Faces
+#+begin_src elisp :tangle "init.el"
+  ;; (set-face-attribute 'default nil
+  ;;                     :family "Iosevka"
+  ;;                     :height 100
+  ;;                     :weight 'medium)
+  ;; (set-face-attribute 'mode-line nil :family "Iosevka NF")
+  ;; (set-face-attribute 'mode-line-active nil :family "Iosevka NF")
+  ;; (set-face-attribute 'mode-line-inactive nil :family "Iosevka NF")
+#+end_src
+** Themes
+*** Gruvbox-theme
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package gruvbox-theme
+    :disabled
+    :config
+   (load-theme 'gruvbox-dark-soft t)
+   (set-face-attribute 'line-number nil :inherit 'default)
+   (set-face-attribute 'line-number-current-line nil :inherit 'default))
+#+end_src
+** Icons
+*** Kind icon
+#+begin_src elisp :tanble "init.el"
+  (use-package kind-icon
+    :disabled
+    :ensure t
+    :after corfu
+    ;:custom
+    (kind-icon-blend-background t)
+    (kind-icon-default-face 'corfu-default) ; only needed with blend-background
+    :config
+    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+#+end_src
+** Modeline
+*** Strd-modeline
+[[file:modeline.el][Modeline]]
+*** Sleek-modeline
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package sleek-modeline
+    :disabled
+    :config (sleek-modeline-mode 1))
+#+end_src
+*** Powerline
+#+begin_src elisp :tangle "init.el"
+  (use-package powerline
+    :disabled
+    :init (powerline-default-theme))
+#+end_src
+
+* LSP
+** Lsp Bridge
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package lsp-bridge
+    :disabled
+    :hook (acm-mode . colorful-mode)
+    :ensure
+    (:host github
+  	 :repo "manateelazycat/lsp-bridge"
+  	 :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+  	 :build (:not compile))
+    :bind
+    (:map acm-mode-map
+  	 ("<tab>" . 'acm-doc-toggle)
+  	 ("TAB"   . 'acm-doc-toggle)
+  	 ("C-M-n" . 'acm-doc-scroll-up)
+  	 ("C-M-p" . 'acm-doc-scroll-down)
+  	 ("C-n"   . 'acm-select-next-page)
+  	 ("C-p"   . 'acm-select-prev-page)
+  	 ("C-j"   . 'acm-select-next)
+  	 ("C-k"   . 'acm-select-prev))
+    :config
+    (advice-add
+     'completion-at-point :override #'lsp-bridge-popup-complete-menu)
+    (set-face-attribute 'acm-frame-default-face nil
+  		      :background (face-attribute 'fringe :background))
+    (set-face-attribute 'acm-frame-select-face nil
+  		      :background (face-attribute 'vertico-current :background)
+  		      :foreground "white")
+    :custom
+    ;; ACM settings
+    (acm-doc-frame-boundary 'display)
+    (acm-candidate-match-function 'orderless-flex)
+    (acm-backend-lsp-match-mode "substring")
+    (acm-backend-lsp-candidates-max-number 200)
+    (tab-always-indent 'complete)
+    (lsp-bridge-user-multiserver-dir (concat user-emacs-directory "components/multiserver"))
+    (lsp-bridge-user-langserver-dir (concat user-emacs-directory "components/langserver"))
+    (lsp-bridge-completion-in-string-file-types '("vue" "dart" "html" "tsx"))
+    (lsp-bridge-multi-lang-server-extension-list
+     '((("tsx") . "tsx_tailwindcss")))
+    (lsp-bridge-multi-lang-server-mode-list
+     '(((tsx-ts-mode) . "tsx_tailwindcss")))
+    (lsp-bridge-get-language-id
+     (lambda (project-path file-path server-name extension-name)
+       (when (string-equal server-name "tailwindcss")
+         (pcase extension-name
+           ("tsx" "typescriptreact")
+           ("jsx" "javascriptreact")
+           ("ts"  "typescript")
+           ("js"  "javascript")
+           (_ extension-name))))))
+#+end_src
+
+** LSP-UI
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package lsp-ui
+    :disabled
+    :if (display-graphic-p)
+    :after lsp-mode
+    :config
+    (set-face-attribute  'lsp-ui-sideline-global nil;; иначе уёбищный шрифт будет
+  		       :family "Iosevka NF" )
+    (set-face-attribute 'lsp-ui-doc-background nil
+  		      :background (face-attribute 'default :background nil t))
+    (set-face-attribute 'lsp-ui-doc-highlight-hover nil
+  		      :background (face-attribute 'default :background nil t))
+    :custom
+    ;; Sideline
+    (lsp-ui-doc-border (face-background 'isearch))
+    (lsp-ui-sideline-enable t)
+    (lsp-ui-sideline-show-diagnostics nil)
+    (lsp-ui-sideline-show-hover nil)
+    (lsp-ui-sideline-show-code-actions nil)
+    (lsp-ui-sideline-delay 0.2)
+    ;; Doc popup
+    (lsp-ui-doc-enable t)
+    (lsp-ui-doc-position 'at-point)
+    (lsp-ui-doc-show-with-cursor nil) ;;after command
+    (lsp-ui-doc-show-with-moust t)
+    (lsp-ui-doc-max-height 20)
+    :bind
+    (:map lsp-ui-mode-map
+              ("M-."     . 'lsp-ui-peek-find-definitions)
+              ("M-?"     . 'lsp-ui-peek-find-references)
+              ("C-c l d" . 'lsp-ui-doc-glance)
+              ("C-c l i" . 'lsp-ui-imenu)))
+#+end_src
+
+** LSP Mode
+#+begin_src emacs-lisp :tangle "init.el"
+  (use-package compat)
+  (use-package lsp-mode
+    :disabled
+    :if (display-graphic-p)
+    :commands (lsp lsp-deferred)
+    :hook
+    (c++-mode lsp-deferred)
+    (pythoh-ts-mode lsp-deferred)
+    (c-mode lsp-deferred)
+    (tsx-ts-mode lsp-deferred)
+    (cmake-ts-mode lsp-deferred)
+    :custom
+    (lsp-completion-provider :none)
+    (lsp-keymap-prefix "C-c l")
+    (lsp-idle-delay 0.3)
+    (lsp-log-io nil)
+    (lsp-use-plists t)
+    (lsp-inlay-hint-enable t)
+    (lsp-modeline-diagnostics-enable t)
+    (lsp-modeline-code-actions-enable t)
+      ;; Breadcrumb (путь к символу вверху буфера)
+    (lsp-headerline-breadcrumb-enable t)
+    (lsp-headerline-breadcrumb-segments '(project file symbols))
+    ;; cause we use prettier
+    (lsp-enable-on-type-formatting nil)
+    (lsp-cmake-server-command '("/home/stradlater/.cargo/bin/neocmakelsp" "stdio"))
+    :config
+    (lsp-enable-which-key-integration t)
+    )
+#+end_src

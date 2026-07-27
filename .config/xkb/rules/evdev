@@ -1,0 +1,12 @@
+! option	= symbols
+  strd:capshyper   = +strd(hyper_capscontrol)
+  strd:composemenu = +strd(rctrl_composemenu)
+  strd:capsshifts  = +strd(caps_shifts)
+  
+
+! option = compat
+  strd:capshyper = +strd(lockonrelease)
+
+
+// Include system 'evdev' file
+! include %S/evdev  

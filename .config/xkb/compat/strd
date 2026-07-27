@@ -1,0 +1,6 @@
+partial xkb_compatibility "lockonrelease" {
+	interpret ISO_Next_Group+AnyOfOrNone(all) {
+		action= LockGroup(group=+1, lockOnRelease);
+	};
+//	virtual_modifiers NumLock,Alt,LevelThree,Super,LevelFive,Meta,Hyper=0x4000,ScrollLock=0x8000;
+};

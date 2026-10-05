@@ -1,8 +1,6 @@
-;; -*- lexical-binding: t; -*-
+;;; -*- lexical-binding: t -*-
 (loadf "components/elpaca.el")
 
-(savehist-mode)
-(delete-selection-mode 1) ; allows to delete selected text by any key
 (setq-default
  shift-select-mode t
  kill-whole-line t ; kill-line not leaves blank line
@@ -30,10 +28,16 @@
  fill-column 80
  create-lockfiles nil
  make-backup-files nil
- select-active-regions nil ;; fix for breaking select region on git Emacs
- recentf-save-file (concat user-emacs-directory "components/recentf.el")
- )
-(setq gamegrid-glyph-height-mm 10.0)
+ recentf-save-file (concat user-emacs-directory "components/recentf.el"))
+
+(savehist-mode)
+(global-hl-line-mode)
+(delete-selection-mode 1) ; allows to delete selected text by any key
+(modify-syntax-entry ?- "w") ; - is not separating "word"
+
+(setq-default gamegrid-glyph-height-mm 10.0)    ; bigger scale in tetris
+(setq-default completion-auto-help nil) ; disabling built-in completion popups
+(setq-default indent-tabs-mode nil)
 
 (defun increment-number-at-point ()
   "Increment number at pos"
@@ -57,6 +61,8 @@
   (add-to-list 'c-default-style '(c-mode . "linux"))
   (add-to-list 'c-default-style '(c++-mode .  "linux")))
 
+(defalias 'typescript-mode 'typescript-ts-mode)
+
 (use-package orderless
  :defer t
  :custom
@@ -72,22 +78,52 @@
   ("C-x b"	. 'consult-buffer)
   ("C-x C-b"	. 'consult-buffer-other-window))
 
-;; :init
-;; (loadf "components/lsp.el")
-(use-package eglot)
+(use-package eglot
+    :hook (tsx-ts-mode . eglot-ensure)
+    :custom
+    (eglot-code-action-indications '(left-fringe))
+    (eglot-workspace-configuration
+     '(:typescript
+       (:preferences
+        ( :includeCompletionsForModuleExports t
+          :includeCompletionsWithSnippetText t
+          :includeInlayParameterNameHints "none"
+          :includeInlayParameterNameHintsWhenArgumentMatchesName nil
+          :includeInlayFunctionParameterTypeHints nil
+          :includeInlayVariableTypeHints nil
+          :includeInlayPropertyDeclarationTypeHints nil
+          :includeInlayFunctionLikeReturnTypeHints nil
+          :includeInlayEnumMemberValueHints nil
+          ))))
+    :config
+    (add-to-list 'eglot-server-programs
+                 '((tsx-ts-mode typescript-ts-mode) .
+                   ("rass" "--"
+                    "typescript-language-server" "--stdio" "--"
+                    "unocss-language-server" "--stdio"
+                    )))
+   )
+;; "vscode-eslint-language-server" "--stdio" "--"
 
-(use-package eglotx
-  :ensure (:host github :repo "cxa/eglotx")
-  :after eglot
-  :demand t
-  :config (eglotx-presets-mode 1))
+  ;; (use-package eglotx
+  ;;   :ensure (:host github :repo "cxa/eglotx")
+  ;;   :after eglot
+  ;;   :demand t
+  ;;   :config (eglotx-presets-mode 1))
 
-(use-package sideline)
+  (use-package sideline
+    :hook (eglot-server-initialized . sideline-mode))
+    ;; :custom (sideline-backends-right '(sideline-flymake)))
 
-(use-package sideline-eglot
-  :hook (eglot-server-initialized . sideline-mode)
-  :init
-  (setq sideline-backends-right '(sideline-eglot)))
+  ;; (use-package sideline-flymake)
+
+  (use-package eldoc-box
+    :hook (eglot-managed-mode . eldoc-box-hover-mode)
+    :custom
+    (eldoc-box-max-pixel-width  400)
+    (eldoc-box-max-pixel-height 300)
+    (eldoc-box-only-multi-line t)
+    (eldoc-box-clear-with-C-g t))
 
 (use-package flycheck
   :hook (c++-ts-mode)
@@ -104,32 +140,35 @@
 
 (use-package treesit
   :ensure nil ;; use built-in
-  :mode
-  (("\\.prisma\\'" . prisma-ts-mode)
-   ("\\.json\\'" . json-ts-mode)
-   ("\\.tsx\\'"  . tsx-ts-mode)
-   ("\\.jsx\\'"  . tsx-ts-mode)
-   ("\\.css\\'"  . css-ts-mode)
-   ("\\.cpp\\'"  . c++-ts-mode)
-   ("\\.hpp\\'"  . c++-ts-mode)
-   ("\\.mjs\\'"  . typescript-ts-mode)
-   ("\\.c\\'"    . c-ts-mode)
-   ("\\.h\\'"    . c-ts-mode)
-   ("\\.lua\\'"  . lua-ts-mode)
-   ("\\.py\\'"   . python-ts-mode)
-   )
-  :custom
-  (put 'tsx-ts-mode 'eglot-language-id "typecriptreact")
+  ;; :mode
+  ;; (("\\.prisma\\'" . prisma-ts-mode)
+  ;;  ("\\.json\\'" . json-ts-mode)
+  ;;  ("\\.jsx\\'"  . tsx-ts-mode)
+  ;;  ("\\.css\\'"  . css-ts-mode)
+  ;;  ("\\.cs\\'"   . csharp-ts-mode)
+  ;;  ("\\.cpp\\'"  . c++-ts-mode)
+  ;;  ("\\.hpp\\'"  . c++-ts-mode)
+  ;;  ("\\.tsx\\'"  . tsx-ts-mode)
+  ;;  ("\\.mjs\\'"  . typescript-ts-mode)
+  ;;  ("\\.c\\'"    . c-ts-mode)
+  ;;  ("\\.h\\'"    . c-ts-mode)
+  ;;  ("\\.lua\\'"  . lua-ts-mode)
+  ;;  ("\\.py\\'"   . python-ts-mode)
+  ;;  )
+  ;; :custom
+  ;; (put 'tsx-ts-mode 'eglot-language-id "typecriptreact")
   (treesit-language-source-alist
    '((typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (tsx        "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
      (css        "https://github.com/tree-sitter/tree-sitter-css")
+     (c-sharp     "https://github.com/tree-sitter/tree-sitter-c-sharp")
      (cpp        "https://github.com/tree-sitter/tree-sitter-cpp")
      (c          "https://github.com/tree-sitter/tree-sitter-c")
      (python          "https://github.com/tree-sitter/tree-sitter-python")
      (lua        "https://github.com/tree-sitter-grammars/tree-sitter-lua"))))
 
 (use-package corfu
+  :disabled
   :defer t
   :hook ((prog-mode org-mode) . corfu-mode)
   :config
@@ -157,9 +196,28 @@
    ("C-k"   . 'corfu-previous)
    ("C-i"   . 'corfu-popupinfo-toggle)))
 
+(use-package company
+  :init (setq tab-always-indent 'complete)
+  :hook ((prog-mode org-mode) . company-mode)
+  :custom
+  (company-frontends ; I don't like docstring in echo
+   '(company-childframe-unless-just-one-frontend
+     company-echo-metadata-frontend
+     company-preview-if-just-one-frontend))
+  :bind
+  (:map
+   company-active-map
+   ([remap next-line] . 'company-select-next-or-abort)
+   ([remap previous-line] . 'company-select-previous-or-abort)
+   ("<f1>" . nil)
+   ("C-n" . nil)
+   ("C-p" . nil)
+   ))
+
 (use-package project
   :custom
-  (project-list-file (concat user-emacs-directory "components/projects")))
+  (project-list-file
+   (concat user-emacs-directory "components/projects")))
 
 (use-package vundo
   :bind
@@ -178,6 +236,14 @@
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-keyword))
 
+(use-package yasnippet
+  :bind
+  (:map yas-minor-mode-map
+   ("TAB" . nil))
+  :hook (prog-mode . yas-minor-mode))
+
+(use-package yasnippet-snippets :after yasnippet)
+
 (use-package yasnippet-capf
   :after cape
   :init
@@ -194,6 +260,9 @@
   ("M-$" . jinx-correct)
   ("C-M-$" . jinx-languages ))
 
+(use-package apheleia
+  :hook (prog-mode))
+
 (use-package multiple-cursors
   :custom
   (mc/list-file
@@ -208,41 +277,56 @@
   ("C-M-k" . 'move-text-up)
   ("C-M-j" . 'move-text-down))
 
-(use-package yasnippet
-  :bind
-  (:map yas-minor-mode-map
-   ("TAB" . nil))
-  :hook (prog-mode . yas-minor-mode))
-
-(use-package yasnippet-snippets :after yasnippet)
-
-(use-package magit
-  :commands (magit)
-  :defer t)
-
-(use-package vterm
-  :bind 
-  ("H-<return>" . 'vterm)
-  ("C-x C-<return>" . 'vterm-other-window))
-
-(use-package markdown-mode
-  :mode ("README\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "multimarkdown")
-  :bind
-  (:map markdown-mode-map
-        ("C-c C-e" . markdown-do)))
-
 (use-package prettier-js
+  :disabled
   :if window-system
   :hook ((tsx-ts-mode css-ts-mode) . prettier-js-mode))
 
 (add-hook 'prog-mode-hook (lambda () (column-number-mode +1)))
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
-(add-hook 'prog-mode-hook #'hl-line-mode)
 (add-hook 'prog-mode-hook #'electric-pair-local-mode)
-(add-hook 'tsx-ts-mode ;; inside tsx-ts-mode for - char support (in corfu)
-		  (lambda () (modify-syntax-entry ?- "w")))
-(add-hook 'dired-mode-hook #'hl-line-mode)
+;; (add-hook 'tsx-ts-mode ;; inside tsx-ts-mode for - char support (in corfu)
+		  ;; (lambda () (modify-syntax-entry ?- "w")))
+
+(use-package magit
+  :commands (magit)
+  :defer t
+  :bind
+  (:map magit-file-section-map
+        ("C-j" . 'magit-next-line)))
+
+(use-package vterm
+  :init
+  (add-hook 'vterm-mode-hook (lambda () (hl-line-mode -1)))
+  :bind 
+  ("H-<return>" . 'vterm)
+  ("C-x C-<return>" . 'vterm-other-window))
+
+(use-package markdown-mode
+  :config
+  (setq markdown-fontify-code-blocks-natively t)
+  :ensure t)
+  ;; :config
+
+
+;;   (add-to-list 'markdown-code-lang-modes '("javascript" . js-ts-mode))
+;;   (add-to-list 'markdown-code-lang-modes '("js" . js-ts-mode)))
+    ;; :mode ("README\\.md\\'" . gfm-mode)
+    ;; :init (setq markdown-command "multimarkdown")
+    ;; :bind
+    ;; (:map markdown-mode-map
+;;   ;; Перенаправляем синтаксис на ts-режимы
+          ;; ("C-c C-e" . markdown-do)))
+
+(use-package dired
+  :ensure nil
+  :bind
+  (:map
+   dired-mode-map
+   ("C-o" . nil)
+   ("C-c o" . 'dired-display-file))
+  :custom
+ (dired-kill-when-opening-new-dired-buffer t))
 
 (use-package org
   :ensure nil
@@ -304,29 +388,30 @@
   (doom-modeline-indent-info nil)
   (doom-modeline-position-column-line-format '("%2l:%2c"))
   (doom-modeline-position-column-format '("%c"))
-  (doom-modeline-position-line-format '("%2l"))
-  :config
-  (add-hook 'elpaca-after-init-hook
-			(lambda ()
-			  (setq-local mode-line-format nil
-						  default-directory
-						  (concat (getenv "HOME") "/")))))
+  (doom-modeline-position-line-format '("%2l")))
+  ;; :config
+  ;; (add-hook
+  ;;  'elpaca-after-init-hook
+  ;;  (lambda ()
+  ;;    (setq-local
+  ;;     mode-line-format nil
+  ;;     default-directory
+  ;;     (concat (getenv "HOME") "/")))))
 
 (use-package keycast
   :commands keycast-mode
   :config
   (define-minor-mode keycast-mode
-	"Show Current command and its key binding in the mode line (fix for use with `doom-modeline')."
-	:global t
-	(if keycast-mode
-		(progn
-		  (add-to-list 'global-mode-string '("" keycast-mode-line " "))
-		  (add-hook 'pre-command-hook 'keycast--update t)
-		  (add-hook 'minibuffer-exit-hook 'keycast--minibuffer-exit t))
-	  (setopt global-mode-string (delete '("" keycast-mode-line " ") global-mode-string))
-		  (remove-hook 'pre-command-hook 'keycast--update)
-		  (remove-hook 'minibuffer-exit-hook 'keycast--minibuffer-exit)))
-  )
+    "Show Current command and its key binding in the mode line (fix for use with `doom-modeline')."
+    :global t
+    (if keycast-mode
+        (progn
+          (add-to-list 'global-mode-string '("" keycast-mode-line " "))
+          (add-hook 'pre-command-hook 'keycast--update t)
+          (add-hook 'minibuffer-exit-hook 'keycast--minibuffer-exit t))
+      (setopt global-mode-string (delete '("" keycast-mode-line " ") global-mode-string))
+      (remove-hook 'pre-command-hook 'keycast--update)
+      (remove-hook 'minibuffer-exit-hook 'keycast--minibuffer-exit))))
 
 (use-package pulsar
   :init
@@ -351,45 +436,43 @@
   :after (nerd-icons nerd-icons)
   :hook (dired-mode))
 
-(use-package dired
-  :ensure nil
-  :bind
-  (:map
-   dired-mode-map
-   ("C-o" . nil)
-   ("C-c o" . 'dired-display-file))
-  :custom
- (dired-kill-when-opening-new-dired-buffer t))
-
 (use-package colorful-mode
   :hook (prog-mode help-mode)
   :custom (colorful-highlight-in-comments t))
 
 (use-package indent-bars
-  :hook(prog-mode . indent-bars-mode)
+  :hook
+  (prog-mode .
+             indent-bars-mode)
   :custom
-  (indent-bars-color '(cursor :face-bg t :blend 0.3))
-  (indent-bars-highlight-current-depth '(:face default :face-bg t :blend 0.5))
+  (indent-bars-color '(highlight :face-bg t :darken t))
+  (indent-bars-highlight-current-depth '(:face cursor :face-bg t :blend 0.7))
   (indent-bars-ts-highlight-current-depth '(no-inherit)) ; equivalent to nil
   (indent-bars-pattern ".")
   (indent-bars-width-frac 0.1)
   (indent-bars-pad-frac 0.1)
   (indent-bars-display-on-blank-lines t)
-  (indent-bars-no-descend-lists nil)
+  (indent-bars-treesit-ignore-blank-lines-types '("module"))
+  (indent-bars-no-descend-lists 'skip)
   (indent-bars-treesit-support t)
   (indent-bars-zigzag nil)
   (indent-bars-starting-column 1)
   (indent-bars-color-by-depth nil)
+  (indent-bars-starting-column 1)
+  
   (indent-bars-treesit-wrap '((c argument_list parameter_list init_declarator parenthesized_expression))))
 
 (use-package rainbow-delimiters
   :hook ((prog-mode help-mode org-mode)))
 
 (use-package kusanagi-theme
+  :disabled
   :ensure (:host github :repo "LionyxML/kusanagi-theme")
-  :config (load-theme 'kusanagi t)
-  (set-face-attribute 'line-number-current-line nil
-   :background (face-attribute 'hl-line :background)))
+  :config (load-theme 'kusanagi t))
+
+(use-package catppuccin-theme
+  :init (setq catppuccin-flavor 'frappe)
+  :config (load-theme 'catppuccin t))
 
 (use-package hydra
   :config
@@ -406,8 +489,8 @@ _H-j_: - vertically
     ("H-h" shrink-window-horizontally)
     ("H-k" enlarge-window)
     ("H-j" shrink-window)
-	("="  balance-windows)
-	("-"  shrink-window-if-larger-than-buffer)
+    ("="  balance-windows)
+    ("-"  shrink-window-if-larger-than-buffer)
     )
   (bind-key "C-x o"   'resize-window/body)
   )
@@ -418,8 +501,6 @@ _H-j_: - vertically
   (:map vertico-map
 		("C-j". nil)))
 
-
-
 (use-package marginalia
   :after vertico
   :requires vertico
@@ -428,21 +509,22 @@ _H-j_: - vertically
 (use-package dashboard
   :if window-system
   :custom
-  (dashboard-startup-banner (concat user-emacs-directory "components/greetings3.txt"))
+  (dashboard-startup-banner
+   (concat user-emacs-directory "components/greetings3.txt"))
   (dashboard-icon-type 'nerd-icons)
   (dashboard-center-content t)
   (dashboard-set-file-icons t)
   (dashboard-items '((recents . 5) (projects . 3)))
   (dashboard-startupify-list
    '(dashboard-insert-banner
-	 dashboard-insert-init-info
-	 dashboard-insert-items))
+     dashboard-insert-init-info
+     dashboard-insert-items))
   :config
   (add-hook 'elpaca-after-init-hook #'dashboard-insert-startupify-lists)
   (add-hook 'elpaca-after-init-hook #'dashboard-initialize)
-  (add-hook 'dashboard-after-initialize-hook #'hl-line-mode)
-  (dashboard-setup-startup-hook)
-  (set-face-attribute 'dashboard-text-banner nil :width 'extra-expanded))
+  (add-hook 'dashboard-after-initialize-hook (lambda () (setq default-directory "~/")))
+  (dashboard-setup-startup-hook))
+  ;; (set-face-attribute 'dashboard-text-banner nil :width 'extra-expanded))
 
 (use-package which-key
   :init (which-key-mode)
@@ -496,6 +578,7 @@ _H-j_: - vertically
 	"C-x -"          nil
 	"C-x <"          nil
 	"C-x >"          nil
+	"C-x C-d"        nil
 	"C-x C-<left>"   nil
 	"C-x C-<right>"  nil)
   
@@ -507,7 +590,6 @@ _H-j_: - vertically
 	"K" '(describe-keymap :wk "Keymap")
 	"k" '(describe-key    :wk "KEY"))
 
-  
-
   (bind-key "<H-tab>" (lambda () (interactive) (insert-char ?\t)))
+  (bind-key [remap next-line] 'next-line 'lisp-interaction-mode-map)
   )

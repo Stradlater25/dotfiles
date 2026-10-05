@@ -152,6 +152,15 @@ hl.window_rule ({
 		float = true
 })
 
+hl.window_rule ({
+		name = "KeePassXC Access Request", 
+		match = {
+				class = "org.keepassxc.KeePassXC",
+				title = "KeePassXC -  Access Request"
+		},
+		float = true
+})
+
 
 hl.window_rule ({
     name = "RyujinxOverlay",
@@ -168,3 +177,4 @@ hl.window_rule ({
 		match = {class = 'hyprland-share-picker'},
 		float = true
 })
+

@@ -11,7 +11,7 @@ local smw = hl.plugin.split_monitor_workspaces
 local terminal = "kitty"
 local fileManager = "dolphin"
 local launcerh = "qs -c noctalia-shell ipc call launcher toggle"
-local emacsclient = "emacsclient --create-frame"
+local emacsclient = "emacsclient --create-frame || emacs --iconic"
 
 
 local dirs = {

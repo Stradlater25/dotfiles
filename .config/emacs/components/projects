@@ -1,4 +1,6 @@
 ;;; -*- lisp-data -*-
-(("/home/stradlater/Documents/.dotfiles/") ("/home/stradlater/.config/hypr/")
- ("/home/stradlater/Documents/vari-website/") ("/home/stradlater/git/emacs/")
+(("/home/stradlater/Projects/azzet-muse-website/")
+ ("/home/stradlater/Documents/.dotfiles/")
+ ("/home/stradlater/Documents/vari-website/")
+ ("/home/stradlater/git/GenericWorlds/") ("/home/stradlater/git/emacs/")
  ("/home/stradlater/Documents/calc/"))

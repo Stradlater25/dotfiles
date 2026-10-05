@@ -22,39 +22,38 @@ hl.monitor({
 -- portrait
 hl.monitor({
     output = "HDMI-A-1",
-	mode = "1920x1080@60",
-	scale = 1,
-	transform = 1,
-	position = "1920x-540"
+    mode = "1920x1080@60",
+    scale = 1,
+    transform = 1,
+    position = "1920x-540"
 })
 
 
 hl.config({
     xwayland = {
-		enabled = true,
-	create_abstract_socket = true
+        enabled = true,
+        create_abstract_socket = true
     }}
 )
 
 
 hl.on("hyprland.start",
       function ()
-	  hl.exec_cmd("noctalia")
-	  hl.exec_cmd("systemctl --user start hyprpolkitagent")
-	  hl.exec_cmd("dbus-update-activation-environment --all")
-	  hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
-	  hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
-	  hl.exec_cmd("wl-paste --watch cliphist store")
-	  hl.exec_cmd("hyprpm reload")
-	  hl.exec_cmd("/home/stradlater/LibreWebTools/TgWsProxy_linux_amd64 &")
-	  hl.exec_cmd("cat .config/.kpp | keepassxc --minimized ~/Documents/Passwords.kdbx --pw-stdin")
+          hl.exec_cmd("noctalia")
+          hl.exec_cmd("systemctl --user start hyprpolkitagent")
+          hl.exec_cmd("dbus-update-activation-environment --all")
+          hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+          hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+          hl.exec_cmd("wl-paste --watch cliphist store")
+          hl.exec_cmd("hyprpm reload")
+          hl.exec_cmd("/home/stradlater/LibreWebTools/TgWsProxy_linux_amd64 &")
+          hl.exec_cmd("cat .config/.kpp | keepassxc --minimized ~/Documents/Passwords.kdbx --pw-stdin")
       end
 )
 
 
-for i = 0, 9 do
+for i = 1, 20 do
     hl.workspace_rule({ workspace = tostring(i), default_name = tostring(i) })
-    hl.workspace_rule({ workspace = "1".. tostring(i), default_name = tostring(i) })
 end
 hl.workspace_rule({workspace = "10", default_name = "X"})
 hl.workspace_rule({workspace = "20", default_name = "X"})

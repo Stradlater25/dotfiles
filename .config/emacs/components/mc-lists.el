@@ -4,17 +4,21 @@
 
 (setq mc/cmds-to-run-for-all
       '(
-		backward-sexp
-		electric-newline-and-maybe-indent
-		kill-region
-		mark-sexp
-		org-beginning-of-line
-		org-delete-char
-		org-end-of-line
-		org-self-insert-command
-		pulsar-pulse-line-magenta
-		))
+        backward-sexp
+        delete-horizontal-space
+        electric-newline-and-maybe-indent
+        kill-region
+        mark-sexp
+        mc/mark-next-lines
+        org-beginning-of-line
+        org-delete-char
+        org-end-of-line
+        org-self-insert-command
+        pulsar-pulse-line-magenta
+        ))
 
 (setq mc/cmds-to-run-once
       '(
-		))
+        mc/mark-previous-lines
+        multiple-cursors-mode
+        ))

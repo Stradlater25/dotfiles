@@ -28,6 +28,7 @@
  fill-column 80
  create-lockfiles nil
  make-backup-files nil
+ use-short-answers t
  recentf-save-file (concat user-emacs-directory "components/recentf.el"))
 
 (savehist-mode)
@@ -139,33 +140,7 @@
   (flycheck-posframe-border-width 2))
 
 (use-package treesit
-  :ensure nil ;; use built-in
-  ;; :mode
-  ;; (("\\.prisma\\'" . prisma-ts-mode)
-  ;;  ("\\.json\\'" . json-ts-mode)
-  ;;  ("\\.jsx\\'"  . tsx-ts-mode)
-  ;;  ("\\.css\\'"  . css-ts-mode)
-  ;;  ("\\.cs\\'"   . csharp-ts-mode)
-  ;;  ("\\.cpp\\'"  . c++-ts-mode)
-  ;;  ("\\.hpp\\'"  . c++-ts-mode)
-  ;;  ("\\.tsx\\'"  . tsx-ts-mode)
-  ;;  ("\\.mjs\\'"  . typescript-ts-mode)
-  ;;  ("\\.c\\'"    . c-ts-mode)
-  ;;  ("\\.h\\'"    . c-ts-mode)
-  ;;  ("\\.lua\\'"  . lua-ts-mode)
-  ;;  ("\\.py\\'"   . python-ts-mode)
-  ;;  )
-  ;; :custom
-  ;; (put 'tsx-ts-mode 'eglot-language-id "typecriptreact")
-  (treesit-language-source-alist
-   '((typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
-     (tsx        "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
-     (css        "https://github.com/tree-sitter/tree-sitter-css")
-     (c-sharp     "https://github.com/tree-sitter/tree-sitter-c-sharp")
-     (cpp        "https://github.com/tree-sitter/tree-sitter-cpp")
-     (c          "https://github.com/tree-sitter/tree-sitter-c")
-     (python          "https://github.com/tree-sitter/tree-sitter-python")
-     (lua        "https://github.com/tree-sitter-grammars/tree-sitter-lua"))))
+  :ensure nil) ;; use built-in
 
 (use-package corfu
   :disabled
@@ -509,8 +484,8 @@ _H-j_: - vertically
 (use-package dashboard
   :if window-system
   :custom
-  (dashboard-startup-banner
-   (concat user-emacs-directory "components/greetings3.txt"))
+  (dashboard-startup-banner 'logo)
+   ;; (concat user-emacs-directory "components/greetings3.txt"))
   (dashboard-icon-type 'nerd-icons)
   (dashboard-center-content t)
   (dashboard-set-file-icons t)
@@ -591,5 +566,5 @@ _H-j_: - vertically
 	"k" '(describe-key    :wk "KEY"))
 
   (bind-key "<H-tab>" (lambda () (interactive) (insert-char ?\t)))
-  (bind-key [remap next-line] 'next-line 'lisp-interaction-mode-map)
+  (bind-key "C-j" 'next-line 'lisp-interaction-mode-map)
   )
